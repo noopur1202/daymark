@@ -10,6 +10,9 @@ class ActivityRepository(
 
     fun entriesForDate(date: String): Flow<List<Entry>> = entryDao.getForDate(date)
 
+    fun entriesForDateRange(start: String, end: String): Flow<List<Entry>> =
+        entryDao.getBetween(start, end)
+
     suspend fun addActivity(name: String, color: String) {
         activityDao.insert(Activity(name = name, color = color))
     }

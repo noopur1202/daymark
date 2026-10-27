@@ -22,6 +22,9 @@ interface EntryDao {
     @Query("SELECT * FROM entries WHERE date = :date")
     fun getForDate(date: String): Flow<List<Entry>>
 
+    @Query("SELECT * FROM entries WHERE date BETWEEN :start AND :end")
+    fun getBetween(start: String, end: String): Flow<List<Entry>>
+
     @Query("SELECT activityId, COUNT(*) as count FROM entries WHERE date BETWEEN :start AND :end GROUP BY activityId")
     suspend fun countsBetween(start: String, end: String): List<ActivityCount>
 }
