@@ -1,6 +1,7 @@
 package com.daymark.app.data
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 class ActivityRepository(
     private val activityDao: ActivityDao,
@@ -12,6 +13,11 @@ class ActivityRepository(
 
     fun entriesForDateRange(start: String, end: String): Flow<List<Entry>> =
         entryDao.getBetween(start, end)
+
+    fun countsFlow(start: String, end: String): Flow<Map<Long, Int>> =
+        entryDao.getBetween(start, end).map { entries ->
+            entries.groupingBy { it.activityId }.eachCount()
+        }
 
     suspend fun addActivity(name: String, color: String) {
         activityDao.insert(Activity(name = name, color = color))
