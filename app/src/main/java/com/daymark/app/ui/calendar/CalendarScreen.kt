@@ -46,6 +46,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.daymark.app.data.Activity
+import com.daymark.app.ui.theme.BlueAccent
+import com.daymark.app.ui.theme.DarkBg
+import com.daymark.app.ui.theme.OrangeAccent
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.TextStyle
@@ -91,15 +94,16 @@ fun CalendarScreen(viewModel: CalendarViewModel, modifier: Modifier = Modifier) 
                 listDate = state.panelDate,
                 onToggle = { viewModel.toggle(it, state.panelDate) },
                 onDelete = viewModel::deleteActivity,
+                onColorChange = viewModel::changeColor,
             )
         }
 
         FloatingActionButton(
             onClick = { showAddDialog = true },
-            containerColor = MaterialTheme.colorScheme.primary,
+            containerColor = OrangeAccent,
             modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
         ) {
-            Icon(Icons.Default.Add, contentDescription = "Add activity", tint = Color.White)
+            Icon(Icons.Default.Add, contentDescription = "Add activity", tint = DarkBg)
         }
     }
 
@@ -117,14 +121,14 @@ fun CalendarScreen(viewModel: CalendarViewModel, modifier: Modifier = Modifier) 
 @Composable
 private fun MonthHeader(month: YearMonth, onPrevious: () -> Unit, onNext: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-        IconButton(onClick = onPrevious) { Text("<", color = MaterialTheme.colorScheme.primary, fontSize = 20.sp) }
+        IconButton(onClick = onPrevious) { Text("<", color = BlueAccent, fontSize = 20.sp) }
         Text(
             "${month.month.getDisplayName(TextStyle.FULL, Locale.getDefault())} ${month.year}",
             fontWeight = FontWeight.Bold,
             modifier = Modifier.weight(1f),
             textAlign = TextAlign.Center,
         )
-        IconButton(onClick = onNext) { Text(">", color = MaterialTheme.colorScheme.primary, fontSize = 20.sp) }
+        IconButton(onClick = onNext) { Text(">", color = BlueAccent, fontSize = 20.sp) }
     }
 }
 
@@ -136,7 +140,7 @@ private fun DayCell(day: DayUiModel, isToday: Boolean, isSelected: Boolean, onCl
         modifier = Modifier
             .background(color = MaterialTheme.colorScheme.surface, shape = shape)
             .then(
-                if (isToday) Modifier.border(2.dp, MaterialTheme.colorScheme.primary, shape) else Modifier
+                if (isToday) Modifier.border(2.dp, Color.White, shape) else Modifier
             )
             .clickable(onClick = onClick)
             .padding(vertical = 8.dp),
@@ -162,8 +166,10 @@ private fun ActivityPanel(
     listDate: LocalDate,
     onToggle: (Long) -> Unit,
     onDelete: (Activity) -> Unit,
+    onColorChange: (Activity, String) -> Unit,
 ) {
     var pendingDelete by remember { mutableStateOf<Activity?>(null) }
+    var colorEdit by remember { mutableStateOf<Activity?>(null) }
 
     val today = LocalDate.now()
     if (listDate != today) {
@@ -188,7 +194,12 @@ private fun ActivityPanel(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                 ) {
-                    Box(Modifier.size(12.dp).background(Color(android.graphics.Color.parseColor(activity.color)), CircleShape))
+                    Box(
+                        Modifier
+                            .size(12.dp)
+                            .background(Color(android.graphics.Color.parseColor(activity.color)), CircleShape)
+                            .clickable { colorEdit = activity },
+                    )
                     Spacer(Modifier.size(12.dp))
                     Text(activity.name, modifier = Modifier.weight(1f))
                     Checkbox(
@@ -221,6 +232,17 @@ private fun ActivityPanel(
             dismissButton = {
                 TextButton(onClick = { pendingDelete = null }) { Text("Cancel") }
             },
+        )
+    }
+
+    colorEdit?.let { activity ->
+        ChangeColorDialog(
+            activity = activity,
+            onConfirm = { color ->
+                onColorChange(activity, color)
+                colorEdit = null
+            },
+            onDismiss = { colorEdit = null },
         )
     }
 }

@@ -25,6 +25,8 @@ class ActivityRepository(
 
     suspend fun deleteActivity(activity: Activity) = activityDao.delete(activity)
 
+    suspend fun updateActivity(activity: Activity) = activityDao.update(activity)
+
     suspend fun toggleEntry(activityId: Long, date: String) {
         val exists = entryDao.getForDateOnce(date).any { it.activityId == activityId }
         if (exists) entryDao.delete(activityId, date)

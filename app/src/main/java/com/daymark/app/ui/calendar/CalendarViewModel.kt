@@ -104,4 +104,8 @@ class CalendarViewModel(private val repo: ActivityRepository) : ViewModel() {
     fun deleteActivity(activity: Activity) {
         viewModelScope.launch { repo.deleteActivity(activity) }
     }
+
+    fun changeColor(activity: Activity, color: String) {
+        viewModelScope.launch { repo.updateActivity(activity.copy(color = color)) }
+    }
 }
