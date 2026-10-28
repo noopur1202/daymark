@@ -1,5 +1,7 @@
 package com.daymark.app.ui.calendar
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -25,8 +27,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.SettingsBackupRestore
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -37,10 +42,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -51,6 +58,10 @@ import com.daymark.app.ui.theme.BlueAccent
 import com.daymark.app.ui.theme.DarkBg
 import com.daymark.app.ui.theme.OrangeAccent
 import com.daymark.app.ui.theme.PinkAccent
+import android.widget.Toast
+import com.daymark.app.DayMarkApplication
+import com.daymark.app.util.DatabaseBackup
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.TextStyle
@@ -63,12 +74,51 @@ fun CalendarScreen(viewModel: CalendarViewModel, modifier: Modifier = Modifier) 
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var showAddDialog by remember { mutableStateOf(false) }
 
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var toast by remember { mutableStateOf<String?>(null) }
+    toast?.let { msg ->
+        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+        toast = null
+    }
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/octet-stream"),
+    ) { uri ->
+        uri ?: return@rememberLauncherForActivityResult
+        val db = (context.applicationContext as DayMarkApplication).database
+        scope.launch {
+            val ok = DatabaseBackup.export(context, db, uri).isSuccess
+            toast = if (ok) "Data exported" else "Export failed"
+        }
+    }
+    val importLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri ->
+        uri ?: return@rememberLauncherForActivityResult
+        val db = (context.applicationContext as DayMarkApplication).database
+        scope.launch {
+            val result = DatabaseBackup.import(context, db, uri)
+            toast = result.fold({ "Data imported" }, { "Import failed: ${it.message}" })
+        }
+    }
+    val menuItems = listOf(
+        "Export data" to {
+            val stamp = java.time.LocalDateTime.now()
+                .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd-HHmmss"))
+            exportLauncher.launch("daymark-backup-$stamp.db")
+        },
+        "Import data" to {
+            importLauncher.launch(arrayOf("*/*"))
+        },
+    )
+
     Box(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
             MonthHeader(
                 month = state.month,
                 onPrevious = viewModel::previousMonth,
                 onNext = viewModel::nextMonth,
+                menuItems = menuItems,
             )
             Spacer(Modifier.height(12.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -122,7 +172,13 @@ fun CalendarScreen(viewModel: CalendarViewModel, modifier: Modifier = Modifier) 
 }
 
 @Composable
-private fun MonthHeader(month: YearMonth, onPrevious: () -> Unit, onNext: () -> Unit) {
+private fun MonthHeader(
+    month: YearMonth,
+    onPrevious: () -> Unit,
+    onNext: () -> Unit,
+    menuItems: List<Pair<String, () -> Unit>>,
+) {
+    var menuOpen by remember { mutableStateOf(false) }
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
         IconButton(onClick = onPrevious) { Text("<", color = PinkAccent, fontSize = 20.sp) }
         Text(
@@ -132,6 +188,24 @@ private fun MonthHeader(month: YearMonth, onPrevious: () -> Unit, onNext: () -> 
             textAlign = TextAlign.Center,
         )
         IconButton(onClick = onNext) { Text(">", color = PinkAccent, fontSize = 20.sp) }
+        IconButton(onClick = { menuOpen = true }) {
+            Icon(
+                Icons.Default.SettingsBackupRestore,
+                contentDescription = "Backup and restore",
+                tint = MaterialTheme.colorScheme.onBackground,
+            )
+        }
+        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+            menuItems.forEach { (label, action) ->
+                DropdownMenuItem(
+                    text = { Text(label) },
+                    onClick = {
+                        menuOpen = false
+                        action()
+                    },
+                )
+            }
+        }
     }
 }
 
