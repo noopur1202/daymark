@@ -56,7 +56,7 @@ fun CalendarScreen(viewModel: CalendarViewModel, modifier: Modifier = Modifier) 
     var showAddDialog by remember { mutableStateOf(false) }
 
     Box(modifier = modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        Column(modifier = Modifier.fillMaxSize().padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 88.dp)) {
             MonthHeader(
                 month = state.month,
                 onPrevious = viewModel::previousMonth,
