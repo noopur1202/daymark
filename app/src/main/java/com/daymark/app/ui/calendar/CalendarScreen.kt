@@ -70,7 +70,7 @@ fun CalendarScreen(viewModel: CalendarViewModel, modifier: Modifier = Modifier) 
                 columns = GridCells.Fixed(7),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
-                modifier = Modifier.weight(1f).fillMaxWidth(),
+                modifier = Modifier.weight(1f, fill = false).fillMaxWidth(),
             ) {
                 items(state.days, key = { it.date.toString() }) { day ->
                     DayCell(
@@ -80,7 +80,6 @@ fun CalendarScreen(viewModel: CalendarViewModel, modifier: Modifier = Modifier) 
                     )
                 }
             }
-            Spacer(Modifier.height(12.dp))
             HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f))
             TodayPanel(
                 activities = state.activities,
