@@ -108,4 +108,8 @@ class CalendarViewModel(private val repo: ActivityRepository) : ViewModel() {
     fun changeColor(activity: Activity, color: String) {
         viewModelScope.launch { repo.updateActivity(activity.copy(color = color)) }
     }
+
+    fun renameActivity(activity: Activity, name: String) {
+        viewModelScope.launch { repo.updateActivity(activity.copy(name = name)) }
+    }
 }

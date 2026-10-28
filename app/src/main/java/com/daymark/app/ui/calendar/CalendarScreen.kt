@@ -97,6 +97,7 @@ fun CalendarScreen(viewModel: CalendarViewModel, modifier: Modifier = Modifier) 
                 onToggle = { viewModel.toggle(it, state.panelDate) },
                 onDelete = viewModel::deleteActivity,
                 onColorChange = viewModel::changeColor,
+                onRename = viewModel::renameActivity,
             )
         }
 
@@ -169,9 +170,11 @@ private fun ColumnScope.ActivityPanel(
     onToggle: (Long) -> Unit,
     onDelete: (Activity) -> Unit,
     onColorChange: (Activity, String) -> Unit,
+    onRename: (Activity, String) -> Unit,
 ) {
     var pendingDelete by remember { mutableStateOf<Activity?>(null) }
     var colorEdit by remember { mutableStateOf<Activity?>(null) }
+    var nameEdit by remember { mutableStateOf<Activity?>(null) }
 
     val today = LocalDate.now()
     if (listDate != today) {
@@ -207,7 +210,10 @@ private fun ColumnScope.ActivityPanel(
                             .clickable { colorEdit = activity },
                     )
                     Spacer(Modifier.size(12.dp))
-                    Text(activity.name, modifier = Modifier.weight(1f))
+                    Text(
+                        activity.name,
+                        modifier = Modifier.weight(1f).clickable { nameEdit = activity },
+                    )
                     Checkbox(
                         checked = activity.id in tickedIds,
                         onCheckedChange = { onToggle(activity.id) },
@@ -249,6 +255,17 @@ private fun ColumnScope.ActivityPanel(
                 colorEdit = null
             },
             onDismiss = { colorEdit = null },
+        )
+    }
+
+    nameEdit?.let { activity ->
+        RenameActivityDialog(
+            activity = activity,
+            onConfirm = { name ->
+                onRename(activity, name)
+                nameEdit = null
+            },
+            onDismiss = { nameEdit = null },
         )
     }
 }
