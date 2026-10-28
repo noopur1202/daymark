@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -161,7 +162,7 @@ private fun DayCell(day: DayUiModel, isToday: Boolean, isSelected: Boolean, onCl
 }
 
 @Composable
-private fun ActivityPanel(
+private fun ColumnScope.ActivityPanel(
     activities: List<Activity>,
     tickedIds: Set<Long>,
     listDate: LocalDate,
@@ -182,12 +183,16 @@ private fun ActivityPanel(
         )
     }
     if (activities.isEmpty()) {
-        Text(
-            "No activities recorded today",
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
-            fontSize = 13.sp,
-            modifier = Modifier.padding(vertical = 8.dp),
-        )
+        Box(
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                "No activities recorded today",
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
+                fontSize = 13.sp,
+            )
+        }
     } else {
         LazyColumn(contentPadding = PaddingValues(bottom = 88.dp)) {
             listItems(activities, key = { it.id }) { activity ->
