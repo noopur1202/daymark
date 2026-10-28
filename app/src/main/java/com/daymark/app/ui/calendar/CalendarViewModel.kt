@@ -28,6 +28,7 @@ data class CalendarUiState(
     val activities: List<Activity> = emptyList(),
     val selectedDate: LocalDate? = null,
     val tickedByDate: Map<LocalDate, Set<Long>> = emptyMap(),
+    val todayTickedIds: Set<Long> = emptySet(),
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -43,7 +44,8 @@ class CalendarViewModel(private val repo: ActivityRepository) : ViewModel() {
         selectedDate,
         repo.activities(),
         month.flatMapLatest { m -> entriesInRange(m) },
-    ) { m, selected, activities, entries ->
+        repo.entriesForDate(today.toString()),
+    ) { m, selected, activities, entries, todayEntries ->
         val entriesByDate: Map<LocalDate, List<String>> = entries.groupBy(
             keySelector = { LocalDate.parse(it.date) },
             valueTransform = { entryColor(it, activities) },
@@ -57,6 +59,7 @@ class CalendarViewModel(private val repo: ActivityRepository) : ViewModel() {
                 keySelector = { LocalDate.parse(it.date) },
                 valueTransform = { it.activityId },
             ).mapValues { it.value.toSet() },
+            todayTickedIds = todayEntries.map { it.activityId }.toSet(),
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CalendarUiState())
 
