@@ -10,8 +10,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items as listItems
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -19,11 +22,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -61,7 +67,12 @@ fun CalendarScreen(viewModel: CalendarViewModel, modifier: Modifier = Modifier) 
                 weekdayNames.forEach { Text(it, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f), fontSize = 12.sp, textAlign = TextAlign.Center, modifier = Modifier.weight(1f)) }
             }
             Spacer(Modifier.height(6.dp))
-            LazyVerticalGrid(columns = GridCells.Fixed(7), verticalArrangement = Arrangement.spacedBy(6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxSize()) {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(7),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+            ) {
                 items(state.days, key = { it.date.toString() }) { day ->
                     DayCell(
                         day = day,
@@ -70,6 +81,14 @@ fun CalendarScreen(viewModel: CalendarViewModel, modifier: Modifier = Modifier) 
                     )
                 }
             }
+            Spacer(Modifier.height(12.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f))
+            TodayPanel(
+                activities = state.activities,
+                tickedIds = state.todayTickedIds,
+                onToggle = { viewModel.toggle(it, LocalDate.now()) },
+                onAdd = { showAddDialog = true },
+            )
         }
 
         FloatingActionButton(
@@ -115,6 +134,51 @@ private fun MonthHeader(month: YearMonth, onPrevious: () -> Unit, onNext: () -> 
             textAlign = TextAlign.Center,
         )
         IconButton(onClick = onNext) { Text(">", color = MaterialTheme.colorScheme.primary, fontSize = 20.sp) }
+    }
+}
+
+@Composable
+private fun TodayPanel(
+    activities: List<com.daymark.app.data.Activity>,
+    tickedIds: Set<Long>,
+    onToggle: (Long) -> Unit,
+    onAdd: () -> Unit,
+) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+        Text(
+            "Today",
+            fontWeight = FontWeight.Bold,
+            fontSize = 16.sp,
+            modifier = Modifier.weight(1f),
+        )
+        TextButton(onClick = onAdd) {
+            Text("+ Add", color = MaterialTheme.colorScheme.primary)
+        }
+    }
+    if (activities.isEmpty()) {
+        Text(
+            "No activities recorded today",
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
+            fontSize = 13.sp,
+            modifier = Modifier.padding(vertical = 8.dp),
+        )
+    } else {
+        LazyColumn(modifier = Modifier.heightIn(max = 200.dp)) {
+            listItems(activities, key = { it.id }) { activity ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                ) {
+                    Box(Modifier.size(12.dp).background(Color(android.graphics.Color.parseColor(activity.color)), CircleShape))
+                    Spacer(Modifier.size(12.dp))
+                    Text(activity.name, modifier = Modifier.weight(1f))
+                    Checkbox(
+                        checked = activity.id in tickedIds,
+                        onCheckedChange = { onToggle(activity.id) },
+                    )
+                }
+            }
+        }
     }
 }
 
