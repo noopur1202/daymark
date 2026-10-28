@@ -27,8 +27,8 @@ data class CalendarUiState(
     val days: List<DayUiModel> = emptyList(),
     val activities: List<Activity> = emptyList(),
     val selectedDate: LocalDate? = null,
-    val tickedByDate: Map<LocalDate, Set<Long>> = emptyMap(),
-    val todayTickedIds: Set<Long> = emptySet(),
+    val panelDate: LocalDate = LocalDate.now(),
+    val panelTickedIds: Set<Long> = emptySet(),
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -44,8 +44,8 @@ class CalendarViewModel(private val repo: ActivityRepository) : ViewModel() {
         selectedDate,
         repo.activities(),
         month.flatMapLatest { m -> entriesInRange(m) },
-        repo.entriesForDate(today.toString()),
-    ) { m, selected, activities, entries, todayEntries ->
+        selectedDate.flatMapLatest { d -> repo.entriesForDate((d ?: today).toString()) },
+    ) { m, selected, activities, entries, panelEntries ->
         val entriesByDate: Map<LocalDate, List<String>> = entries.groupBy(
             keySelector = { LocalDate.parse(it.date) },
             valueTransform = { entryColor(it, activities) },
@@ -55,11 +55,8 @@ class CalendarViewModel(private val repo: ActivityRepository) : ViewModel() {
             days = buildDays(m, entriesByDate),
             activities = activities,
             selectedDate = selected,
-            tickedByDate = entries.groupBy(
-                keySelector = { LocalDate.parse(it.date) },
-                valueTransform = { it.activityId },
-            ).mapValues { it.value.toSet() },
-            todayTickedIds = todayEntries.map { it.activityId }.toSet(),
+            panelDate = selected ?: today,
+            panelTickedIds = panelEntries.map { it.activityId }.toSet(),
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CalendarUiState())
 
@@ -89,13 +86,12 @@ class CalendarViewModel(private val repo: ActivityRepository) : ViewModel() {
         return days
     }
 
-    fun tickedIdsFor(state: CalendarUiState, date: LocalDate): Set<Long> =
-        state.tickedByDate[date].orEmpty()
-
     fun previousMonth() { month.value = month.value.minusMonths(1) }
     fun nextMonth() { month.value = month.value.plusMonths(1) }
-    fun selectDate(date: LocalDate) { selectedDate.value = date }
-    fun dismissPopup() { selectedDate.value = null }
+
+    fun selectDate(date: LocalDate) {
+        selectedDate.value = if (selectedDate.value == date) null else date
+    }
 
     fun toggle(activityId: Long, date: LocalDate) {
         viewModelScope.launch { repo.toggleEntry(activityId, date.toString()) }
