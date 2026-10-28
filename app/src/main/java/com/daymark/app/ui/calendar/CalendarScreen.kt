@@ -49,6 +49,7 @@ import com.daymark.app.data.Activity
 import com.daymark.app.ui.theme.BlueAccent
 import com.daymark.app.ui.theme.DarkBg
 import com.daymark.app.ui.theme.OrangeAccent
+import com.daymark.app.ui.theme.PinkAccent
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.TextStyle
@@ -121,14 +122,14 @@ fun CalendarScreen(viewModel: CalendarViewModel, modifier: Modifier = Modifier) 
 @Composable
 private fun MonthHeader(month: YearMonth, onPrevious: () -> Unit, onNext: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-        IconButton(onClick = onPrevious) { Text("<", color = BlueAccent, fontSize = 20.sp) }
+        IconButton(onClick = onPrevious) { Text("<", color = PinkAccent, fontSize = 20.sp) }
         Text(
             "${month.month.getDisplayName(TextStyle.FULL, Locale.getDefault())} ${month.year}",
             fontWeight = FontWeight.Bold,
             modifier = Modifier.weight(1f),
             textAlign = TextAlign.Center,
         )
-        IconButton(onClick = onNext) { Text(">", color = BlueAccent, fontSize = 20.sp) }
+        IconButton(onClick = onNext) { Text(">", color = PinkAccent, fontSize = 20.sp) }
     }
 }
 
@@ -140,7 +141,7 @@ private fun DayCell(day: DayUiModel, isToday: Boolean, isSelected: Boolean, onCl
         modifier = Modifier
             .background(color = MaterialTheme.colorScheme.surface, shape = shape)
             .then(
-                if (isToday) Modifier.border(2.dp, Color.White, shape) else Modifier
+                if (isToday) Modifier.border(2.dp, BlueAccent, shape) else Modifier
             )
             .clickable(onClick = onClick)
             .padding(vertical = 8.dp),
