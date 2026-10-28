@@ -3,6 +3,13 @@ package com.daymark.app
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -14,9 +21,16 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -29,6 +43,8 @@ import com.daymark.app.ui.calendar.CalendarViewModel
 import com.daymark.app.ui.stats.StatsScreen
 import com.daymark.app.ui.stats.StatsViewModel
 import com.daymark.app.ui.theme.DayMarkTheme
+import com.daymark.app.ui.theme.DarkBg
+import kotlinx.coroutines.delay
 
 private data class Tab(val route: String, val label: String, val icon: ImageVector)
 
@@ -39,13 +55,36 @@ private val tabs = listOf(
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         val app = application as DayMarkApplication
         setContent {
             DayMarkTheme {
-                MainScaffold(app)
+                var splashDone by remember { mutableStateOf(false) }
+                LaunchedEffect(Unit) {
+                    delay(1_400)
+                    splashDone = true
+                }
+                Crossfade(targetState = splashDone, label = "splash") { done ->
+                    if (done) MainScaffold(app) else SplashScreen()
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun SplashScreen() {
+    Box(
+        modifier = Modifier.fillMaxSize().background(DarkBg),
+        contentAlignment = Alignment.Center,
+    ) {
+        Image(
+            painter = painterResource(R.drawable.splash_logo),
+            contentDescription = "DayMark",
+            modifier = Modifier.fillMaxWidth(0.62f),
+            contentScale = ContentScale.FillWidth,
+        )
     }
 }
 
