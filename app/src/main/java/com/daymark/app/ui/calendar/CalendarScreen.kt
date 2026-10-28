@@ -9,8 +9,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -29,7 +29,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -56,7 +55,7 @@ fun CalendarScreen(viewModel: CalendarViewModel, modifier: Modifier = Modifier) 
     var showAddDialog by remember { mutableStateOf(false) }
 
     Box(modifier = modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize().padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 88.dp)) {
+        Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
             MonthHeader(
                 month = state.month,
                 onPrevious = viewModel::previousMonth,
@@ -87,7 +86,6 @@ fun CalendarScreen(viewModel: CalendarViewModel, modifier: Modifier = Modifier) 
                 activities = state.activities,
                 tickedIds = state.todayTickedIds,
                 onToggle = { viewModel.toggle(it, LocalDate.now()) },
-                onAdd = { showAddDialog = true },
             )
         }
 
@@ -142,19 +140,7 @@ private fun TodayPanel(
     activities: List<com.daymark.app.data.Activity>,
     tickedIds: Set<Long>,
     onToggle: (Long) -> Unit,
-    onAdd: () -> Unit,
 ) {
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-        Text(
-            "Today",
-            fontWeight = FontWeight.Bold,
-            fontSize = 16.sp,
-            modifier = Modifier.weight(1f),
-        )
-        TextButton(onClick = onAdd) {
-            Text("+ Add", color = MaterialTheme.colorScheme.primary)
-        }
-    }
     if (activities.isEmpty()) {
         Text(
             "No activities recorded today",
@@ -163,7 +149,7 @@ private fun TodayPanel(
             modifier = Modifier.padding(vertical = 8.dp),
         )
     } else {
-        LazyColumn(modifier = Modifier.heightIn(max = 200.dp)) {
+        LazyColumn(contentPadding = PaddingValues(bottom = 88.dp)) {
             listItems(activities, key = { it.id }) { activity ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
